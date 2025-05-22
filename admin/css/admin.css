@@ -1,0 +1,74 @@
+/**
+ * Printify SureCart Sync Admin Styles
+ */
+
+.printify-surecart-sync-header {
+    margin-bottom: 20px;
+}
+
+.printify-surecart-sync-header h1 {
+    margin-bottom: 10px;
+}
+
+.printify-surecart-sync-header p {
+    font-size: 14px;
+    color: #555;
+}
+
+.printify-surecart-sync-section {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.printify-surecart-sync-section h2 {
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.printify-surecart-sync-status {
+    display: flex;
+    align-items: center;
+    margin-top: 15px;
+}
+
+.printify-surecart-sync-status .spinner {
+    margin-top: 0;
+    margin-right: 10px;
+}
+
+.printify-surecart-sync-results {
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+
+.printify-surecart-sync-results h3 {
+    margin-top: 0;
+}
+
+.printify-surecart-sync-results ul {
+    margin-left: 20px;
+    list-style-type: disc;
+}
+
+.printify-surecart-sync-api-info {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+    margin-top: 20px;
+}
+
+.printify-surecart-sync-api-info h3 {
+    margin-top: 0;
+}
+
+.printify-surecart-sync-api-info code {
+    background: #e9ecef;
+    padding: 2px 5px;
+    border-radius: 3px;
+}

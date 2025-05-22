@@ -1,0 +1,190 @@
+# Copyright (C) 2023 Your Name
+# This file is distributed under the GPL-2.0+.
+msgid ""
+msgstr ""
+"Project-Id-Version: Printify SureCart Sync 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/printify-surecart-sync\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2023-07-01T12:00:00+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.7.1\n"
+"X-Domain: printify-surecart-sync\n"
+
+#. Plugin Name of the plugin
+msgid "Printify SureCart Sync"
+msgstr ""
+
+#. Plugin URI of the plugin
+msgid "https://github.com/yourusername/printify-surecart-sync"
+msgstr ""
+
+#. Description of the plugin
+msgid "Syncs products from Printify to SureCart"
+msgstr ""
+
+#. Author of the plugin
+msgid "Your Name"
+msgstr ""
+
+#. Author URI of the plugin
+msgid "https://yourwebsite.com"
+msgstr ""
+
+#: includes/class-printify-api.php:85
+#: includes/class-printify-api.php:122
+msgid "Unknown error"
+msgstr ""
+
+#: includes/class-printify-api.php:89
+#: includes/class-printify-api.php:126
+msgid "Printify API error: %s (Code: %s)"
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:77
+msgid "Once Daily"
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:88
+msgid "Printify SureCart Sync requires SureCart to be installed and activated."
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:99
+#: includes/class-printify-surecart-sync.php:100
+msgid "Printify Sync"
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:142
+msgid "An error occurred during the sync process"
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:143
+msgid "Show"
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:144
+msgid "Hide"
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:158
+msgid "Sync your Printify products with SureCart to easily sell print-on-demand products."
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:162
+msgid "Settings"
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:170
+msgid "Printify API Token"
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:174
+msgid "Enter your Printify API token. You can generate one in your Printify account under My Profile > Connections."
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:179
+msgid "Printify Shop ID"
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:182
+msgid "Enter your Printify Shop ID. You can find this in the URL when viewing your shop in Printify."
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:187
+msgid "Auto Sync"
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:191
+msgid "Automatically sync products daily"
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:200
+msgid "Manual Sync"
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:201
+msgid "Click the button below to manually sync products from Printify to SureCart."
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:204
+msgid "Sync Products Now"
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:209
+msgid "Syncing products..."
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:213
+msgid "Sync Results"
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:219
+msgid "API Information"
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:220
+msgid "This plugin uses the Printify API to fetch product data and the SureCart API to create and update products."
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:221
+msgid "For more information, visit:"
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:223
+msgid "Printify API Documentation"
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:224
+msgid "SureCart Documentation"
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:238
+msgid "You do not have sufficient permissions to access this page."
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:257
+msgid "Please set your Printify API token and shop ID in the settings."
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:275
+msgid "No products found in your Printify shop."
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:310
+msgid "Sync completed. %d products created, %d products updated, %d errors."
+msgstr ""
+
+#: includes/class-printify-surecart-sync.php:318
+msgid "Errors:"
+msgstr ""
+
+#: includes/class-surecart-integration.php:25
+msgid "Failed to create product in SureCart"
+msgstr ""
+
+#: includes/class-surecart-integration.php:47
+msgid "Failed to update product in SureCart"
+msgstr ""
+
+#: includes/class-surecart-integration.php:69
+msgid "Failed to create price in SureCart"
+msgstr ""
+
+#: includes/class-surecart-integration.php:91
+msgid "Failed to update price in SureCart"
+msgstr ""
+
+#: includes/class-surecart-integration.php:113
+msgid "Failed to create variant in SureCart"
+msgstr ""
+
+#: includes/class-surecart-integration.php:135
+msgid "Failed to update variant in SureCart"
+msgstr ""
+
+#: includes/class-surecart-integration.php:207
+msgid "Error processing product %s: %s"
+msgstr ""
