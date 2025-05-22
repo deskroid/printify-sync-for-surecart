@@ -121,7 +121,7 @@ You can customize the plugin code to sync additional data or modify how data is 
 
 ## Support
 
-For support, please create an issue on the [GitHub repository](https://github.com/yourusername/printify-surecart-sync) or contact us through our website.
+For support, please create an issue on the [GitHub repository](https://github.com/davleav/printify-surecart-sync).
 
 ## License
 
