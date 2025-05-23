@@ -3,7 +3,7 @@
  * Plugin Name: Printify SureCart Sync
  * Plugin URI: https://github.com/davleav/printify-surecart-sync
  * Description: Syncs products and orders from Printify to SureCart
- * Version: 0.9.0
+ * Version: 0.5.0
  * Author: David Leavitt
  * Author URI: https://david.leavitt.pro
  * License: GPL-2.0+
@@ -18,7 +18,7 @@ if (!defined('WPINC')) {
 }
 
 // Define plugin constants
-define('PRINTIFY_SURECART_SYNC_VERSION', '1.0.0');
+define('PRINTIFY_SURECART_SYNC_VERSION', '0.5.0');
 define('PRINTIFY_SURECART_SYNC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('PRINTIFY_SURECART_SYNC_PLUGIN_URL', plugin_dir_url(__FILE__));
 
