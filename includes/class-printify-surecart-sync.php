@@ -88,13 +88,13 @@ class Printify_SureCart_Sync_Main {
         load_plugin_textdomain('printify-surecart-sync', false, dirname(plugin_basename(PRINTIFY_SURECART_SYNC_PLUGIN_DIR)) . '/languages');
 
         // Add admin menu
-        add_action('admin_menu', array($this, 'add_admin_menu'));
+        add_action('admin_menu', 'add_admin_menu');
 
         // Register settings
-        add_action('admin_init', array($this, 'register_settings'));
+        add_action('admin_init', 'register_settings');
 
         // Enqueue admin scripts and styles
-        add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
+        add_action('admin_enqueue_scripts', 'enqueue_admin_assets');
 
         // Get settings
         $this->printify_api_token = get_option('printify_surecart_sync_api_token', '');
