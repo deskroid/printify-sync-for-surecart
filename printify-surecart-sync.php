@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Printify SureCart Sync
- * Plugin URI: https://github.com/yourusername/printify-surecart-sync
+ * Plugin URI: https://github.com/davleav/printify-surecart-sync
  * Description: Syncs products and orders from Printify to SureCart
  * Version: 0.9.0
  * Author: David Leavitt

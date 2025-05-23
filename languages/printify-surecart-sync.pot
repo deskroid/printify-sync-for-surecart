@@ -19,7 +19,7 @@ msgid "Printify SureCart Sync"
 msgstr ""
 
 #. Plugin URI of the plugin
-msgid "https://github.com/yourusername/printify-surecart-sync"
+msgid "https://github.com/davleav/printify-surecart-sync"
 msgstr ""
 
 #. Description of the plugin
