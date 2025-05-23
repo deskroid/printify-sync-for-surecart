@@ -151,7 +151,7 @@ class Printify_SureCart_Sync_Main {
      */
     public function add_admin_menu() {
         add_submenu_page(
-            'surecart',
+            'settings',
             __('Printify Sync', 'printify-surecart-sync'),
             __('Printify Sync', 'printify-surecart-sync'),
             'manage_options',
