@@ -27,3 +27,6 @@ require_once PRINTIFY_SURECART_SYNC_PLUGIN_DIR . 'includes/class-printify-sureca
 
 // Initialize the plugin
 $printify_surecart_sync = new Printify_SureCart_Sync_Main();
+
+// Register the cleanup hook
+add_action('printify_surecart_clear_sync_progress', array($printify_surecart_sync, 'clear_sync_progress'));

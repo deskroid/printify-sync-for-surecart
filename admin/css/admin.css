@@ -72,3 +72,36 @@
     padding: 2px 5px;
     border-radius: 3px;
 }
+
+#printify-connection-result {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-weight: 500;
+}
+
+#printify-connection-result.notice-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+#printify-connection-result.notice-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+#printify-test-connection {
+    margin-top: 10px;
+}
+
+/* Sync notice styles */
+#printify-surecart-sync-notice {
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+#printify-surecart-sync-status-text {
+    font-style: italic;
+}
