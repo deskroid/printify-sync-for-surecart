@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: Printify SureCart Sync
- * Plugin URI: https://github.com/davleav/printify-surecart-sync
+ * Plugin URI: https://github.com/deskroid/printify-surecart-sync
  * Description: Syncs products and orders from Printify to SureCart
  * Version: 0.5.0
- * Author: David Leavitt
- * Author URI: https://david.leavitt.pro
+ * Author: deskroid
+ * Author URI: https://github.com/deskroid
  * License: GPL-2.0+
  * License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain: printify-surecart-sync
