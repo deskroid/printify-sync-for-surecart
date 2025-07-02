@@ -321,13 +321,33 @@ class Printify_SureCart_Sync_Main {
      * Add admin menu
      */
     public function add_admin_menu() {
-        add_submenu_page(
-            'options-general.php',
+        // Add main menu below SureCart (priority 51, SureCart is 50)
+        add_menu_page(
             __('Printify Sync', 'printify-surecart-sync'),
             __('Printify Sync', 'printify-surecart-sync'),
             'manage_options',
             'printify-surecart-sync',
-            array($this, 'admin_page')
+            array($this, 'sync_page'),
+            'dashicons-update',
+            51
+        );
+        // Add Sync submenu (default)
+        add_submenu_page(
+            'printify-surecart-sync',
+            __('Sync', 'printify-surecart-sync'),
+            __('Sync', 'printify-surecart-sync'),
+            'manage_options',
+            'printify-surecart-sync',
+            array($this, 'sync_page')
+        );
+        // Add Settings submenu
+        add_submenu_page(
+            'printify-surecart-sync',
+            __('Settings', 'printify-surecart-sync'),
+            __('Settings', 'printify-surecart-sync'),
+            'manage_options',
+            'printify-surecart-sync-settings',
+            array($this, 'settings_page')
         );
     }
 
@@ -395,200 +415,30 @@ class Printify_SureCart_Sync_Main {
     }
 
     /**
-     * Admin page
+     * Sync page (manual sync, results, etc.)
      */
-    public function admin_page() {
-        // Check if we should automatically continue a sync
-        if (isset($_GET['action']) && $_GET['action'] === 'continue_sync') {
-            // Display the sync results
-            echo $this->sync_products();
-        }
+    public function sync_page() {
         ?>
         <div class="wrap">
             <div class="printify-surecart-sync-header">
                 <h1><?php _e('Printify SureCart Sync', 'printify-surecart-sync'); ?></h1>
                 <p><?php _e('Sync your Printify products with SureCart to easily sell print-on-demand products.', 'printify-surecart-sync'); ?></p>
             </div>
-            
-            <div class="printify-surecart-sync-section">
-                <h2><?php _e('Settings', 'printify-surecart-sync'); ?></h2>
-                
-                <form method="post" action="options.php">
-                    <?php settings_fields('printify_surecart_sync_settings'); ?>
-                    <?php do_settings_sections('printify_surecart_sync_settings'); ?>
-                    
-                    <table class="form-table">
-                        <tr valign="top">
-                            <th scope="row"><?php _e('Printify API Token', 'printify-surecart-sync'); ?></th>
-                            <td>
-                                <input type="password" id="printify_surecart_sync_api_token" name="printify_surecart_sync_api_token" value="<?php echo esc_attr(get_option('printify_surecart_sync_api_token')); ?>" class="regular-text" />
-                                <a href="#" id="toggle-api-token"><?php _e('Show', 'printify-surecart-sync'); ?></a>
-                                <p class="description"><?php _e('Enter your Printify API token. You can generate one in your Printify account under My Profile > Connections.', 'printify-surecart-sync'); ?></p>
-                            </td>
-                        </tr>
-                        
-                        <tr valign="top">
-                            <th scope="row"><?php _e('Printify Shop ID', 'printify-surecart-sync'); ?></th>
-                            <td>
-                                <input type="text" name="printify_surecart_sync_shop_id" value="<?php echo esc_attr(get_option('printify_surecart_sync_shop_id')); ?>" class="regular-text" />
-                                <p class="description"><?php _e('Enter your Printify Shop ID. You can find this in the URL when viewing your shop in Printify.', 'printify-surecart-sync'); ?></p>
-                                <div style="margin-top: 10px;">
-                                    <button type="button" id="printify-test-connection" class="button button-secondary">
-                                        <?php _e('Test API Connection', 'printify-surecart-sync'); ?>
-                                    </button>
-                                    <span id="printify-connection-result" style="margin-left: 10px; display: none;"></span>
-                                </div>
-                            </td>
-                        </tr>
-                        
-                        <tr valign="top">
-                            <th scope="row"><?php _e('Auto Sync', 'printify-surecart-sync'); ?></th>
-                            <td>
-                                <label>
-                                    <input type="checkbox" name="printify_surecart_sync_auto_sync" value="1" <?php checked(1, get_option('printify_surecart_sync_auto_sync', 0)); ?> />
-                                    <?php _e('Automatically sync products daily', 'printify-surecart-sync'); ?>
-                                </label>
-                            </td>
-                        </tr>
-                        
-                        <tr valign="top">
-                            <th scope="row"><?php _e('Order Sync', 'printify-surecart-sync'); ?></th>
-                            <td>
-                                <label>
-                                    <input type="checkbox" name="printify_surecart_sync_order_sync" value="1" <?php checked(1, get_option('printify_surecart_sync_order_sync', 0)); ?> />
-                                    <?php _e('Automatically sync orders to Printify', 'printify-surecart-sync'); ?>
-                                </label>
-                                <p class="description"><?php _e('When enabled, new orders in SureCart will be automatically sent to Printify for fulfillment.', 'printify-surecart-sync'); ?></p>
-                            </td>
-                        </tr>
-                        
-                        <tr valign="top">
-                            <th scope="row"><?php _e('Order Statuses to Sync', 'printify-surecart-sync'); ?></th>
-                            <td>
-                                <?php
-                                $order_statuses = array(
-                                    'paid' => __('Paid', 'printify-surecart-sync'),
-                                    'processing' => __('Processing', 'printify-surecart-sync'),
-                                    'completed' => __('Completed', 'printify-surecart-sync'),
-                                );
-                                
-                                $selected_statuses = get_option('printify_surecart_sync_order_statuses', array('paid'));
-                                
-                                if (!is_array($selected_statuses)) {
-                                    $selected_statuses = array('paid');
-                                }
-                                
-                                foreach ($order_statuses as $status => $label) {
-                                    ?>
-                                    <label style="display: block; margin-bottom: 5px;">
-                                        <input type="checkbox" name="printify_surecart_sync_order_statuses[]" value="<?php echo esc_attr($status); ?>" <?php checked(in_array($status, $selected_statuses)); ?> />
-                                        <?php echo esc_html($label); ?>
-                                    </label>
-                                    <?php
-                                }
-                                ?>
-                                <p class="description"><?php _e('Select which order statuses should trigger a sync to Printify.', 'printify-surecart-sync'); ?></p>
-                            </td>
-                        </tr>
-                    </table>
-                    
-                    <?php submit_button(); ?>
-                </form>
-                
-                <!-- Inline script to ensure button functionality -->
-                <script type="text/javascript">
-                    /* <![CDATA[ */
-                    var ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';
-                    /* ]]> */
-                    
-                    jQuery(document).ready(function($) {
-                        console.log('Inline script loaded');
-                        
-                        // Check if we're continuing a sync (URL has action=continue_sync)
-                        var urlParams = new URLSearchParams(window.location.search);
-                        if (urlParams.get('action') === 'continue_sync') {
-                            // Scroll to the sync results
-                            $('html, body').animate({
-                                scrollTop: $('#printify-surecart-sync-results').offset().top - 50
-                            }, 500);
-                        }
-                        
-                        $('#printify-test-connection').on('click', function() {
-                            console.log('Test connection button clicked (inline)');
-                            var $button = $(this);
-                            var $result = $('#printify-connection-result');
-                            var apiToken = $('#printify_surecart_sync_api_token').val();
-                            var shopId = $('input[name="printify_surecart_sync_shop_id"]').val();
-                            
-                            alert('Testing connection to Printify API...');
-                            
-                            // Disable button and show loading
-                            $button.prop('disabled', true).text('Testing...');
-                            $result.hide();
-                            
-                            // Make AJAX request
-                            $.ajax({
-                                url: ajaxurl,
-                                type: 'POST',
-                                data: {
-                                    action: 'printify_test_connection',
-                                    nonce: '<?php echo wp_create_nonce('printify_surecart_sync_nonce'); ?>',
-                                    api_token: apiToken,
-                                    shop_id: shopId
-                                },
-                                success: function(response) {
-                                    console.log('AJAX success response:', response);
-                                    
-                                    if (response.success) {
-                                        $result.removeClass('notice-error').addClass('notice-success')
-                                               .html(response.data.message)
-                                               .show();
-                                    } else {
-                                        $result.removeClass('notice-success').addClass('notice-error')
-                                               .html(response.data.message)
-                                               .show();
-                                    }
-                                    
-                                    // Re-enable button
-                                    $button.prop('disabled', false).text('<?php _e('Test API Connection', 'printify-surecart-sync'); ?>');
-                                },
-                                error: function(xhr, status, error) {
-                                    console.log('AJAX error:', status, error);
-                                    
-                                    $result.removeClass('notice-success').addClass('notice-error')
-                                           .html('Error: ' + error)
-                                           .show();
-                                    
-                                    // Re-enable button
-                                    $button.prop('disabled', false).text('<?php _e('Test API Connection', 'printify-surecart-sync'); ?>');
-                                }
-                            });
-                        });
-                    });
-                </script>
-            </div>
-            
+            <?php // Manual Sync UI and Results (copied from old admin_page) ?>
             <div class="printify-surecart-sync-section">
                 <h2><?php _e('Manual Sync', 'printify-surecart-sync'); ?></h2>
                 <p><?php _e('Click the button below to manually sync products from Printify to SureCart.', 'printify-surecart-sync'); ?></p>
-                
-                <button id="printify-surecart-sync-button" class="button button-primary">
-                    <?php _e('Sync Products Now', 'printify-surecart-sync'); ?>
-                </button>
-                
+                <button id="printify-surecart-sync-button" class="button button-primary"><?php _e('Sync Products Now', 'printify-surecart-sync'); ?></button>
                 <button id="printify-surecart-force-sync-button" class="button button-secondary" style="margin-left: 10px;">
                     <?php _e('Force Full Resync', 'printify-surecart-sync'); ?>
                 </button>
-                
                 <p class="description" style="margin-top: 5px;">
                     <?php _e('Use "Force Full Resync" to update all products including prices, even if they haven\'t changed.', 'printify-surecart-sync'); ?>
                 </p>
-                
                 <div id="printify-surecart-sync-status" class="printify-surecart-sync-status" style="display: none;">
                     <span class="spinner is-active"></span>
                     <p><?php _e('Syncing products...', 'printify-surecart-sync'); ?></p>
                 </div>
-                
                 <div id="printify-surecart-sync-notice" style="display: none; margin-top: 15px; margin-bottom: 15px;">
                     <div class="notice notice-info">
                         <p><strong><?php _e('Sync in Progress', 'printify-surecart-sync'); ?></strong></p>
@@ -596,38 +446,27 @@ class Printify_SureCart_Sync_Main {
                         <p id="printify-surecart-sync-status-text"><?php _e('Starting sync...', 'printify-surecart-sync'); ?></p>
                     </div>
                 </div>
-                
                 <div id="printify-surecart-sync-results" class="printify-surecart-sync-results" style="display: none;">
                     <h3><?php _e('Sync Results', 'printify-surecart-sync'); ?></h3>
                     <div id="printify-surecart-sync-results-content"></div>
                 </div>
             </div>
-            
             <?php if (get_option('printify_surecart_sync_order_sync', 0)): ?>
             <div class="printify-surecart-sync-section">
                 <h2><?php _e('Order Sync', 'printify-surecart-sync'); ?></h2>
                 <p><?php _e('You can manually sync a specific SureCart order to Printify by entering the order ID below.', 'printify-surecart-sync'); ?></p>
-                
                 <div class="manual-order-sync" style="margin-bottom: 20px;">
                     <input type="text" id="order-id-to-sync" placeholder="<?php esc_attr_e('Enter SureCart Order ID', 'printify-surecart-sync'); ?>" class="regular-text">
-                    <button id="sync-single-order" class="button button-secondary">
-                        <?php _e('Sync Order', 'printify-surecart-sync'); ?>
-                    </button>
-                    
+                    <button id="sync-single-order" class="button button-secondary"><?php _e('Sync Order', 'printify-surecart-sync'); ?></button>
                     <div id="order-sync-status" style="display: none; margin-top: 10px;">
                         <span class="spinner is-active" style="float: left; margin-right: 5px;"></span>
                         <p style="margin: 0;"><?php _e('Syncing order...', 'printify-surecart-sync'); ?></p>
                     </div>
-                    
                     <div id="order-sync-result" style="display: none; margin-top: 10px;"></div>
                 </div>
-                
                 <h3><?php _e('Recent Order Syncs', 'printify-surecart-sync'); ?></h3>
-                
                 <?php
                 global $wpdb;
-                
-                // Get recent orders with Printify sync data
                 $orders = $wpdb->get_results(
                     "SELECT p.ID, p.post_date, pm.meta_value as printify_order_id
                     FROM {$wpdb->posts} p
@@ -636,7 +475,6 @@ class Printify_SureCart_Sync_Main {
                     ORDER BY p.post_date DESC
                     LIMIT 10"
                 );
-                
                 if (!empty($orders)):
                 ?>
                 <table class="widefat striped">
@@ -676,13 +514,11 @@ class Printify_SureCart_Sync_Main {
                 <?php else: ?>
                 <p><?php _e('No orders have been synced to Printify yet.', 'printify-surecart-sync'); ?></p>
                 <?php endif; ?>
-                
                 <p class="description" style="margin-top: 10px;">
                     <?php _e('This table shows the 10 most recent orders that have been synced to Printify.', 'printify-surecart-sync'); ?>
                 </p>
             </div>
             <?php endif; ?>
-            
             <div class="printify-surecart-sync-api-info">
                 <h3><?php _e('API Information', 'printify-surecart-sync'); ?></h3>
                 <p><?php _e('This plugin uses the Printify API to fetch product data and the SureCart API to create and update products.', 'printify-surecart-sync'); ?></p>
@@ -691,6 +527,94 @@ class Printify_SureCart_Sync_Main {
                     <li><a href="https://developers.printify.com/" target="_blank"><?php _e('Printify API Documentation', 'printify-surecart-sync'); ?></a></li>
                     <li><a href="https://surecart.com/docs/" target="_blank"><?php _e('SureCart Documentation', 'printify-surecart-sync'); ?></a></li>
                 </ul>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Settings page (settings form only)
+     */
+    public function settings_page() {
+        ?>
+        <div class="wrap">
+            <div class="printify-surecart-sync-header">
+                <h1><?php _e('Printify SureCart Sync Settings', 'printify-surecart-sync'); ?></h1>
+            </div>
+            <div class="printify-surecart-sync-section">
+                <h2><?php _e('Settings', 'printify-surecart-sync'); ?></h2>
+                <form method="post" action="options.php">
+                    <?php settings_fields('printify_surecart_sync_settings'); ?>
+                    <?php do_settings_sections('printify_surecart_sync_settings'); ?>
+                    <table class="form-table">
+                        <tr valign="top">
+                            <th scope="row"><?php _e('Printify API Token', 'printify-surecart-sync'); ?></th>
+                            <td>
+                                <input type="password" id="printify_surecart_sync_api_token" name="printify_surecart_sync_api_token" value="<?php echo esc_attr(get_option('printify_surecart_sync_api_token')); ?>" class="regular-text" />
+                                <a href="#" id="toggle-api-token"><?php _e('Show', 'printify-surecart-sync'); ?></a>
+                                <p class="description"><?php _e('Enter your Printify API token. You can generate one in your Printify account under My Profile > Connections.', 'printify-surecart-sync'); ?></p>
+                            </td>
+                        </tr>
+                        <tr valign="top">
+                            <th scope="row"><?php _e('Printify Shop ID', 'printify-surecart-sync'); ?></th>
+                            <td>
+                                <input type="text" name="printify_surecart_sync_shop_id" value="<?php echo esc_attr(get_option('printify_surecart_sync_shop_id')); ?>" class="regular-text" />
+                                <p class="description"><?php _e('Enter your Printify Shop ID. You can find this in the URL when viewing your shop in Printify.', 'printify-surecart-sync'); ?></p>
+                                <div style="margin-top: 10px;">
+                                    <button type="button" id="printify-test-connection" class="button button-secondary">
+                                        <?php _e('Test API Connection', 'printify-surecart-sync'); ?>
+                                    </button>
+                                    <span id="printify-connection-result" style="margin-left: 10px; display: none;"></span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr valign="top">
+                            <th scope="row"><?php _e('Auto Sync', 'printify-surecart-sync'); ?></th>
+                            <td>
+                                <label>
+                                    <input type="checkbox" name="printify_surecart_sync_auto_sync" value="1" <?php checked(1, get_option('printify_surecart_sync_auto_sync', 0)); ?> />
+                                    <?php _e('Automatically sync products daily', 'printify-surecart-sync'); ?>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr valign="top">
+                            <th scope="row"><?php _e('Order Sync', 'printify-surecart-sync'); ?></th>
+                            <td>
+                                <label>
+                                    <input type="checkbox" name="printify_surecart_sync_order_sync" value="1" <?php checked(1, get_option('printify_surecart_sync_order_sync', 0)); ?> />
+                                    <?php _e('Automatically sync orders to Printify', 'printify-surecart-sync'); ?>
+                                </label>
+                                <p class="description"><?php _e('When enabled, new orders in SureCart will be automatically sent to Printify for fulfillment.', 'printify-surecart-sync'); ?></p>
+                            </td>
+                        </tr>
+                        <tr valign="top">
+                            <th scope="row"><?php _e('Order Statuses to Sync', 'printify-surecart-sync'); ?></th>
+                            <td>
+                                <?php
+                                $order_statuses = array(
+                                    'paid' => __('Paid', 'printify-surecart-sync'),
+                                    'processing' => __('Processing', 'printify-surecart-sync'),
+                                    'completed' => __('Completed', 'printify-surecart-sync'),
+                                );
+                                $selected_statuses = get_option('printify_surecart_sync_order_statuses', array('paid'));
+                                if (!is_array($selected_statuses)) {
+                                    $selected_statuses = array('paid');
+                                }
+                                foreach ($order_statuses as $status => $label) {
+                                    ?>
+                                    <label style="display: block; margin-bottom: 5px;">
+                                        <input type="checkbox" name="printify_surecart_sync_order_statuses[]" value="<?php echo esc_attr($status); ?>" <?php checked(in_array($status, $selected_statuses)); ?> />
+                                        <?php echo esc_html($label); ?>
+                                    </label>
+                                    <?php
+                                }
+                                ?>
+                                <p class="description"><?php _e('Select which order statuses should trigger a sync to Printify.', 'printify-surecart-sync'); ?></p>
+                            </td>
+                        </tr>
+                    </table>
+                    <?php submit_button(); ?>
+                </form>
             </div>
         </div>
         <?php
