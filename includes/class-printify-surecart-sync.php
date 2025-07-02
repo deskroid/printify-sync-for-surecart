@@ -774,7 +774,9 @@ class Printify_SureCart_Sync_Main {
             'completed' => false,
             'products' => $printify_products, // Store the products data
             'force_resync' => $force_resync,
-            'last_processed' => time()
+            'last_processed' => time(),
+            'results' => array(), // Track detailed results for each product
+            'start_time' => time(), // Track when sync started
         );
         
         // Save progress for 1 hour
@@ -834,6 +836,7 @@ class Printify_SureCart_Sync_Main {
         $errors = $progress['errors'];
         $error_messages = $progress['error_messages'];
         $printify_products = $progress['products'];
+        $results = isset($progress['results']) ? $progress['results'] : array();
         
         error_log('Processing batch: ' . $progress['processed'] . ' to ' . min($progress['processed'] + $batch_size, count($printify_products)) . ' of ' . count($printify_products));
         
@@ -846,6 +849,15 @@ class Printify_SureCart_Sync_Main {
             }
             
             $printify_product = $printify_products[$i];
+            $product_id = isset($printify_product['id']) ? $printify_product['id'] : '';
+            $product_title = isset($printify_product['title']) ? $printify_product['title'] : '';
+            $result_entry = [
+                'id' => $product_id,
+                'name' => $product_title,
+                'action' => '',
+                'error' => null,
+                'timestamp' => time(),
+            ];
             error_log('Processing product ' . ($i + 1) . ' of ' . count($printify_products));
             
             // Check if product has an ID
@@ -853,6 +865,9 @@ class Printify_SureCart_Sync_Main {
                 error_log('Product missing ID: ' . json_encode($printify_product));
                 $errors++;
                 $error_messages[] = 'Product missing ID';
+                $result_entry['action'] = 'error';
+                $result_entry['error'] = 'Product missing ID';
+                $results[] = $result_entry;
                 continue;
             }
             
@@ -865,6 +880,9 @@ class Printify_SureCart_Sync_Main {
                 error_log('Error getting product details: ' . $product_details->get_error_message());
                 $errors++;
                 $error_messages[] = $product_details->get_error_message();
+                $result_entry['action'] = 'error';
+                $result_entry['error'] = $product_details->get_error_message();
+                $results[] = $result_entry;
                 continue;
             }
             
@@ -881,21 +899,31 @@ class Printify_SureCart_Sync_Main {
                     error_log('Error processing product: ' . $result->get_error_message());
                     $errors++;
                     $error_messages[] = $result->get_error_message();
+                    $result_entry['action'] = 'error';
+                    $result_entry['error'] = $result->get_error_message();
                 } elseif ($result === 'created') {
                     error_log('Product created successfully');
                     $created++;
+                    $result_entry['action'] = 'created';
                 } elseif ($result === 'updated') {
                     error_log('Product updated successfully');
                     $updated++;
+                    $result_entry['action'] = 'updated';
                 } else {
                     error_log('Unexpected result from process_product: ' . $result);
                     $errors++;
                     $error_messages[] = 'Unexpected result: ' . $result;
+                    $result_entry['action'] = 'error';
+                    $result_entry['error'] = 'Unexpected result: ' . $result;
                 }
+                $results[] = $result_entry;
             } catch (Exception $e) {
                 error_log('Exception during product processing: ' . $e->getMessage());
                 $errors++;
                 $error_messages[] = 'Exception: ' . $e->getMessage();
+                $result_entry['action'] = 'error';
+                $result_entry['error'] = 'Exception: ' . $e->getMessage();
+                $results[] = $result_entry;
             }
         }
         
@@ -905,6 +933,7 @@ class Printify_SureCart_Sync_Main {
         $progress['updated'] = $updated;
         $progress['errors'] = $errors;
         $progress['error_messages'] = $error_messages;
+        $progress['results'] = $results;
         $progress['last_processed'] = time();
         
         // Check if we've processed all products
@@ -1044,10 +1073,25 @@ class Printify_SureCart_Sync_Main {
             
             // Calculate progress percentage
             $percent = 0;
+            $eta = '';
             if (isset($progress['total']) && $progress['total'] > 0) {
                 $percent = round(($progress['processed'] / $progress['total']) * 100);
                 // Ensure percent is between 0 and 100
                 $percent = max(0, min(100, $percent));
+                // Calculate ETA if at least one product processed
+                if (!empty($progress['start_time']) && $progress['processed'] > 0) {
+                    $elapsed = time() - $progress['start_time'];
+                    $avg_per_product = $elapsed / $progress['processed'];
+                    $remaining = $progress['total'] - $progress['processed'];
+                    $eta_seconds = round($avg_per_product * $remaining);
+                    if ($eta_seconds > 0) {
+                        if ($eta_seconds < 60) {
+                            $eta = sprintf(__('~%d seconds remaining', 'printify-surecart-sync'), $eta_seconds);
+                        } else {
+                            $eta = sprintf(__('~%d minutes %d seconds remaining', 'printify-surecart-sync'), floor($eta_seconds/60), $eta_seconds%60);
+                        }
+                    }
+                }
             }
             
             if ($progress['completed']) {
@@ -1062,6 +1106,32 @@ class Printify_SureCart_Sync_Main {
                         $progress['errors']
                     ) . 
                     '</p>';
+                
+                // Progress bar
+                $html .= '<div style="margin:10px 0; width:100%; background:#e5e5e5; border-radius:4px; height:20px;">'
+                    . '<div style="width:100%; background:#46b450; height:20px; border-radius:4px;"></div>'
+                    . '</div>';
+                if ($eta) {
+                    $html .= '<p style="margin:5px 0 0 0; color:#666;">' . esc_html($eta) . '</p>';
+                }
+                
+                // Results table
+                if (!empty($progress['results'])) {
+                    $html .= '<h4>' . __('Detailed Results', 'printify-surecart-sync') . '</h4>';
+                    $html .= '<table class="widefat striped" style="margin-top:10px;">';
+                    $html .= '<thead><tr><th>' . __('Product ID', 'printify-surecart-sync') . '</th><th>' . __('Name', 'printify-surecart-sync') . '</th><th>' . __('Action', 'printify-surecart-sync') . '</th><th>' . __('Error', 'printify-surecart-sync') . '</th></tr></thead><tbody>';
+                    foreach ($progress['results'] as $result) {
+                        $action_label = ucfirst($result['action']);
+                        $error_msg = $result['error'] ? esc_html($result['error']) : '';
+                        $html .= '<tr>';
+                        $html .= '<td>' . esc_html($result['id']) . '</td>';
+                        $html .= '<td>' . esc_html($result['name']) . '</td>';
+                        $html .= '<td>' . esc_html($action_label) . '</td>';
+                        $html .= '<td>' . $error_msg . '</td>';
+                        $html .= '</tr>';
+                    }
+                    $html .= '</tbody></table>';
+                }
                 
                 if ($progress['errors'] > 0) {
                     $html .= '<p>' . __('Errors:', 'printify-surecart-sync') . '</p><ul>';
@@ -1081,7 +1151,9 @@ class Printify_SureCart_Sync_Main {
                     'created' => $progress['created'],
                     'updated' => $progress['updated'],
                     'errors' => $progress['errors'],
-                    'show_progress' => true
+                    'results' => $progress['results'],
+                    'show_progress' => true,
+                    'eta' => $eta,
                 ));
             } else {
                 // Sync is in progress
@@ -1100,7 +1172,31 @@ class Printify_SureCart_Sync_Main {
                         $progress['errors']
                     ) . 
                     '</p>';
-                
+                // Progress bar
+                $html .= '<div style="margin:10px 0; width:100%; background:#e5e5e5; border-radius:4px; height:20px;">'
+                    . '<div style="width:' . $percent . '%; background:#46b450; height:20px; border-radius:4px;"></div>'
+                    . '</div>';
+                if ($eta) {
+                    $html .= '<p style="margin:5px 0 0 0; color:#666;">' . esc_html($eta) . '</p>';
+                }
+                // Results table (show last 10 results for brevity)
+                if (!empty($progress['results'])) {
+                    $html .= '<h4>' . __('Recent Results', 'printify-surecart-sync') . '</h4>';
+                    $html .= '<table class="widefat striped" style="margin-top:10px;">';
+                    $html .= '<thead><tr><th>' . __('Product ID', 'printify-surecart-sync') . '</th><th>' . __('Name', 'printify-surecart-sync') . '</th><th>' . __('Action', 'printify-surecart-sync') . '</th><th>' . __('Error', 'printify-surecart-sync') . '</th></tr></thead><tbody>';
+                    $recent_results = array_slice($progress['results'], -10);
+                    foreach ($recent_results as $result) {
+                        $action_label = ucfirst($result['action']);
+                        $error_msg = $result['error'] ? esc_html($result['error']) : '';
+                        $html .= '<tr>';
+                        $html .= '<td>' . esc_html($result['id']) . '</td>';
+                        $html .= '<td>' . esc_html($result['name']) . '</td>';
+                        $html .= '<td>' . esc_html($action_label) . '</td>';
+                        $html .= '<td>' . $error_msg . '</td>';
+                        $html .= '</tr>';
+                    }
+                    $html .= '</tbody></table>';
+                }
                 if ($progress['errors'] > 0) {
                     $html .= '<p>' . __('Errors so far:', 'printify-surecart-sync') . '</p><ul>';
                     foreach ($progress['error_messages'] as $message) {
@@ -1108,9 +1204,7 @@ class Printify_SureCart_Sync_Main {
                     }
                     $html .= '</ul>';
                 }
-                
                 $html .= '</div>';
-                
                 wp_send_json_success(array(
                     'status' => 'in_progress',
                     'html' => $html,
@@ -1121,7 +1215,9 @@ class Printify_SureCart_Sync_Main {
                     'created' => $progress['created'],
                     'updated' => $progress['updated'],
                     'errors' => $progress['errors'],
-                    'show_progress' => true
+                    'results' => $progress['results'],
+                    'show_progress' => true,
+                    'eta' => $eta,
                 ));
             }
         } catch (Exception $e) {
@@ -1367,7 +1463,8 @@ class Printify_SureCart_Sync_Main {
                 'errors' => 0,
                 'error_messages' => array(),
                 'completed' => false,
-                'products' => $printify_products // Store the products data
+                'products' => $printify_products, // Store the products data
+                'results' => array(), // Track detailed results for each product
             );
         } else {
             // Resume from previous progress
@@ -1375,6 +1472,7 @@ class Printify_SureCart_Sync_Main {
             $updated = $progress['updated'];
             $errors = $progress['errors'];
             $error_messages = $progress['error_messages'];
+            $results = isset($progress['results']) ? $progress['results'] : array();
             
             // Make sure products are stored in the progress
             if (!isset($progress['products'])) {
@@ -1397,6 +1495,7 @@ class Printify_SureCart_Sync_Main {
             $updated = 0;
             $errors = 0;
             $error_messages = array();
+            $results = array(); // Reset results for a full resync
         }
         
         // Debug the progress tracking
@@ -1405,6 +1504,15 @@ class Printify_SureCart_Sync_Main {
         // Process products in batches
         for ($i = $progress['processed']; $i < count($printify_products); $i++) {
             $printify_product = $printify_products[$i];
+            $product_id = isset($printify_product['id']) ? $printify_product['id'] : '';
+            $product_title = isset($printify_product['title']) ? $printify_product['title'] : '';
+            $result_entry = [
+                'id' => $product_id,
+                'name' => $product_title,
+                'action' => '',
+                'error' => null,
+                'timestamp' => time(),
+            ];
             error_log('Processing product ' . ($i + 1) . ' of ' . count($printify_products));
             
             // Check if we've reached the batch limit or time limit
@@ -1417,6 +1525,7 @@ class Printify_SureCart_Sync_Main {
                 $progress['updated'] = $updated;
                 $progress['errors'] = $errors;
                 $progress['error_messages'] = $error_messages;
+                $progress['results'] = $results;
                 
                 // Save progress for 1 hour
                 set_transient($progress_key, $progress, 3600);
@@ -1459,6 +1568,9 @@ class Printify_SureCart_Sync_Main {
                 error_log('Product missing ID: ' . json_encode($printify_product));
                 $errors++;
                 $error_messages[] = 'Product missing ID';
+                $result_entry['action'] = 'error';
+                $result_entry['error'] = 'Product missing ID';
+                $results[] = $result_entry;
                 continue;
             }
             
@@ -1471,6 +1583,9 @@ class Printify_SureCart_Sync_Main {
                 error_log('Error getting product details: ' . $product_details->get_error_message());
                 $errors++;
                 $error_messages[] = $product_details->get_error_message();
+                $result_entry['action'] = 'error';
+                $result_entry['error'] = $product_details->get_error_message();
+                $results[] = $result_entry;
                 continue;
             }
             
@@ -1478,22 +1593,6 @@ class Printify_SureCart_Sync_Main {
             
             // Free up memory
             gc_collect_cycles();
-            
-            // Add more detailed logging
-            error_log('About to process product: ' . $product_details['title']);
-            error_log('SureCart integration object: ' . (is_object($this->surecart_integration) ? 'Valid object' : 'NOT VALID'));
-            
-            // Check if SureCart is active
-            if (!function_exists('is_plugin_active')) {
-                include_once(ABSPATH . 'wp-admin/includes/plugin.php');
-            }
-            
-            $surecart_active = is_plugin_active('surecart/surecart.php');
-            error_log('SureCart plugin active (before processing): ' . ($surecart_active ? 'Yes' : 'No'));
-            
-            // Check if SureCart classes are loaded
-            $classes_loaded = class_exists('\SureCart\Models\Product');
-            error_log('SureCart classes loaded (before processing): ' . ($classes_loaded ? 'Yes' : 'No'));
             
             // Process the product - pass the force_resync parameter
             try {
@@ -1503,22 +1602,31 @@ class Printify_SureCart_Sync_Main {
                     error_log('Error processing product: ' . $result->get_error_message());
                     $errors++;
                     $error_messages[] = $result->get_error_message();
+                    $result_entry['action'] = 'error';
+                    $result_entry['error'] = $result->get_error_message();
                 } elseif ($result === 'created') {
                     error_log('Product created successfully');
                     $created++;
+                    $result_entry['action'] = 'created';
                 } elseif ($result === 'updated') {
                     error_log('Product updated successfully');
                     $updated++;
+                    $result_entry['action'] = 'updated';
                 } else {
                     error_log('Unexpected result from process_product: ' . $result);
                     $errors++;
                     $error_messages[] = 'Unexpected result: ' . $result;
+                    $result_entry['action'] = 'error';
+                    $result_entry['error'] = 'Unexpected result: ' . $result;
                 }
+                $results[] = $result_entry;
             } catch (Exception $e) {
                 error_log('Exception during product processing: ' . $e->getMessage());
-                error_log('Exception trace: ' . $e->getTraceAsString());
                 $errors++;
                 $error_messages[] = 'Exception: ' . $e->getMessage();
+                $result_entry['action'] = 'error';
+                $result_entry['error'] = 'Exception: ' . $e->getMessage();
+                $results[] = $result_entry;
             }
             
             // Free up memory after processing each product
@@ -1532,6 +1640,7 @@ class Printify_SureCart_Sync_Main {
         $progress['updated'] = $updated;
         $progress['errors'] = $errors;
         $progress['error_messages'] = $error_messages;
+        $progress['results'] = $results;
         $progress['completed'] = true;
         set_transient($progress_key, $progress, 3600);
         

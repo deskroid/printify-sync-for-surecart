@@ -173,6 +173,17 @@
                         // Update the results content
                         if (response.data.html) {
                             $('#printify-surecart-sync-results-content').html(response.data.html);
+                            $('#printify-surecart-sync-results').show();
+                        }
+                        // Show ETA if available
+                        if (response.data.eta) {
+                            if ($('#printify-surecart-sync-eta').length) {
+                                $('#printify-surecart-sync-eta').text(response.data.eta).show();
+                            } else {
+                                $('#printify-surecart-sync-results-content').prepend('<div id="printify-surecart-sync-eta" style="margin-bottom:8px;color:#666;font-size:14px;">' + response.data.eta + '</div>');
+                            }
+                        } else {
+                            $('#printify-surecart-sync-eta').hide();
                         }
                         
                         // Update status text if progress information is available
@@ -202,6 +213,10 @@
                                 .replace('{updated}', response.data.updated)
                                 .replace('{errors}', response.data.errors)
                             );
+                            // Scroll to results
+                            $('html, body').animate({
+                                scrollTop: $('#printify-surecart-sync-results').offset().top - 50
+                            }, 500);
                             
                             // Keep the notice visible for a moment, then hide it after a delay
                             setTimeout(function() {
@@ -212,8 +227,8 @@
                             $('#printify-surecart-sync-button').prop('disabled', false);
                             $('#printify-surecart-force-sync-button').prop('disabled', false);
                         } else if (response.data.status === 'in_progress') {
-                            // Continue polling after a delay
-                            setTimeout(pollSyncStatus, 3000);
+                            // Continue polling every 2 seconds
+                            setTimeout(pollSyncStatus, 2000);
                         } else {
                             // Unknown status, stop polling
                             console.log('Unknown status:', response.data.status);
